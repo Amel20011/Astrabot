@@ -3,7 +3,6 @@ const fs = require('fs-extra');
 const path = require('path');
 const chalk = require('chalk');
 const qrcode = require('qrcode-terminal');
-const { Boom } = require('@hapi/boom');
 
 // Import handler
 const { messageHandler } = require('./handler');
@@ -11,55 +10,107 @@ const { messageHandler } = require('./handler');
 // Config
 const CONFIG = require('./config');
 
-// Inisialisasi folder
+// Initialize
 async function init() {
-    const folders = ['data', 'assets', 'auth_info'];
+    const folders = ['data', 'libs', 'assets', 'auth_info'];
     folders.forEach(folder => {
         if (!fs.existsSync(path.join(__dirname, folder))) {
             fs.mkdirSync(path.join(__dirname, folder), { recursive: true });
         }
     });
     
-    // Cek file penting
-    const requiredFiles = [
-        'data/settings.json',
-        'data/products.json',
-        'data/admins.json'
-    ];
+    // Default files
+    const defaultFiles = {
+        'data/products.json': [
+            {
+                id: 1,
+                name: "ALIGHT MOTION PREMIUM",
+                description: "Aplikasi edit video premium dengan fitur lengkap",
+                price: 15000,
+                stock: 16,
+                category: "APK Premium"
+            },
+            {
+                id: 2,
+                name: "CANVA LIFETIME",
+                description: "Canva Pro lifetime account",
+                price: 25000,
+                stock: 8,
+                category: "Design Tools"
+            },
+            {
+                id: 3,
+                name: "CANVA PRO",
+                description: "Canva Pro account 1 tahun",
+                price: 20000,
+                stock: 13,
+                category: "Design Tools"
+            },
+            {
+                id: 4,
+                name: "CAPCUT PRO",
+                description: "Capcut Pro unlimited export",
+                price: 18000,
+                stock: 193,
+                category: "APK Premium"
+            },
+            {
+                id: 5,
+                name: "CAPCUT PRO HEAD",
+                description: "Capcut Pro for header/banner",
+                price: 10000,
+                stock: 20,
+                category: "APK Premium"
+            }
+        ],
+        'data/settings.json': {
+            storeName: "Toko Digital Liviaa",
+            ownerName: "Liviaa",
+            whatsappNumber: "13658700681",
+            prefix: ".",
+            isOpen: true,
+            openingHours: "24 Jam",
+            features: {
+                useButtons: true,
+                useLists: true,
+                antiLink: true,
+                welcomeMessage: true
+            }
+        },
+        'data/admins.json': ["13658700681"],
+        'data/groups.json': {},
+        'data/orders.json': [],
+        'data/carts.json': {}
+    };
     
-    for (const file of requiredFiles) {
-        if (!fs.existsSync(path.join(__dirname, file))) {
-            console.log(chalk.red(`❌ File ${file} tidak ditemukan!`));
-            console.log(chalk.yellow('⚠️ Jalankan: node setup.js terlebih dahulu'));
-            process.exit(1);
+    for (const [filePath, content] of Object.entries(defaultFiles)) {
+        const fullPath = path.join(__dirname, filePath);
+        if (!fs.existsSync(fullPath)) {
+            await fs.writeJson(fullPath, content, { spaces: 2 });
         }
     }
 }
 
-// Tampilkan QR dengan countdown
-let qrCountdown = 60; // 1 menit
-function displayQR(qr) {
+// Display QR with timer
+let qrTimer = 60;
+function showQR(qr) {
     console.clear();
     console.log(chalk.yellow('╔══════════════════════════════════════╗'));
-    console.log(chalk.yellow('║     📱 SCAN QR CODE UNTUK LOGIN      ║'));
+    console.log(chalk.yellow('║          📱 SCAN QR CODE             ║'));
     console.log(chalk.yellow('╚══════════════════════════════════════╝\n'));
     
-    console.log(chalk.cyan('⏰ Waktu tersisa:'), chalk.green.bold(`${qrCountdown} detik`));
+    console.log(chalk.cyan(`⏰ Waktu tersisa: ${qrTimer} detik`));
     console.log(chalk.cyan('📱 Cara scan:'));
-    console.log(chalk.white('1. Buka WhatsApp → Settings'));
+    console.log(chalk.white('1. WhatsApp → Settings'));
     console.log(chalk.white('2. Linked Devices → Link a Device'));
-    console.log(chalk.white('3. Scan QR code di bawah:\n'));
+    console.log(chalk.white('3. Scan QR di bawah:\n'));
     
     qrcode.generate(qr, { small: true });
     
-    console.log(chalk.yellow('\n⚠️ QR akan berubah setiap 30 detik'));
-    console.log(chalk.yellow('🔄 Bot akan restart otomatis setelah 1 menit'));
-    
-    // Start countdown
-    const countdownInterval = setInterval(() => {
-        qrCountdown--;
-        if (qrCountdown <= 0) {
-            clearInterval(countdownInterval);
+    const timer = setInterval(() => {
+        qrTimer--;
+        if (qrTimer <= 0) {
+            clearInterval(timer);
             console.log(chalk.red('\n⏰ Waktu habis! Restarting...'));
             setTimeout(() => process.exit(1), 2000);
         }
@@ -70,86 +121,61 @@ async function connectToWhatsApp() {
     await init();
     
     console.log(chalk.cyan('╔══════════════════════════════════════╗'));
-    console.log(chalk.cyan('║     🤖 BOT TOKO LIVIAA v5.0          ║'));
-    console.log(chalk.cyan('║     📱 KIUUR/BAILEYS MODIFIED        ║'));
+    console.log(chalk.cyan('║     🤖 BOT TOKO LIVIAA v6.0          ║'));
+    console.log(chalk.cyan('║     📱 BUTTON & LIST MENU            ║'));
     console.log(chalk.cyan('╚══════════════════════════════════════╝\n'));
     
-    console.log(chalk.blue('🔧 Memulai koneksi WhatsApp...'));
-    
-    const { state, saveCreds } = await useMultiFileAuthState(CONFIG.authFolder);
-    const { version, isLatest } = await fetchLatestBaileysVersion();
-    
-    console.log(chalk.blue(`📱 Baileys Version: ${version.join('.')}`));
-    console.log(chalk.blue(`✅ Latest: ${isLatest ? 'Yes' : 'No'}`));
+    const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
+    const { version } = await fetchLatestBaileysVersion();
     
     const sock = makeWASocket({
         version,
-        auth: {
-            creds: state.creds,
-            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" })),
-        },
-        logger: CONFIG.logger,
+        auth: state,
         printQRInTerminal: false,
-        browser: CONFIG.browser,
-        syncFullHistory: false,
-        markOnlineOnConnect: true,
-        generateHighQualityLinkPreview: true,
-        getMessage: async (key) => {
-            return {
-                conversation: "Message not found"
-            }
-        }
+        browser: ['Toko Bot', 'Chrome', '110.0.5481.100']
     });
 
-    // Event handlers
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;
         
         if (qr) {
-            displayQR(qr);
+            qrTimer = 60;
+            showQR(qr);
         }
         
         if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut);
-            
-            console.log(chalk.red('⚠️ Koneksi terputus, reason:'), lastDisconnect.error);
-            
+            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) {
-                console.log(chalk.yellow('🔄 Mencoba reconnect...'));
-                setTimeout(connectToWhatsApp, 5000);
-            } else {
-                console.log(chalk.red('❌ Logged out, silakan scan ulang QR'));
-                process.exit(1);
+                console.log(chalk.yellow('🔄 Reconnecting...'));
+                setTimeout(connectToWhatsApp, 3000);
             }
         }
         
         if (connection === 'open') {
             console.clear();
             console.log(chalk.green('╔══════════════════════════════════════╗'));
-            console.log(chalk.green('║     ✅ BOT BERHASIL TERHUBUNG       ║'));
+            console.log(chalk.green('║     ✅ BOT TERHUBUNG KE WA           ║'));
             console.log(chalk.green('╚══════════════════════════════════════╝\n'));
             
-            console.log(chalk.cyan(`🤖 Nama Bot: ${sock.user?.name || 'Toko Liviaa'}`));
-            console.log(chalk.cyan(`📞 Nomor Bot: ${sock.user?.id.split(':')[0] || 'Unknown'}`));
+            console.log(chalk.cyan(`🤖 Bot Name: ${sock.user?.name || 'Toko Liviaa'}`));
             console.log(chalk.cyan(`🔧 Prefix: ${CONFIG.prefix}`));
-            console.log(chalk.cyan(`👤 Owner: ${CONFIG.ownerName} (${CONFIG.ownerNumber})`));
-            console.log(chalk.cyan(`🏪 Toko: ${CONFIG.storeName}`));
-            console.log(chalk.cyan(`⏰ Dibuat: ${new Date().toLocaleString()}\n`));
+            console.log(chalk.cyan(`👤 Owner: ${CONFIG.ownerName}`));
+            console.log(chalk.cyan(`📞 WA: ${CONFIG.ownerNumber}`));
+            console.log(chalk.cyan(`⏰ ${new Date().toLocaleString()}\n`));
             
-            console.log(chalk.yellow('📋 FITUR AKTIF:'));
-            console.log(chalk.white('• Store dengan list produk'));
-            console.log(chalk.white('• Button & List menu (3 garis)'));
-            console.log(chalk.white('• Anti-link grup'));
-            console.log(chalk.white('• Welcome message'));
-            console.log(chalk.white('• QRIS payment'));
-            console.log(chalk.white('• Approval system'));
-            console.log(chalk.white('• Admin commands\n'));
+            console.log(chalk.yellow('✨ FITUR AKTIF:'));
+            console.log(chalk.white('✓ Button Menu & List (3 garis)'));
+            console.log(chalk.white('✓ Store dengan produk'));
+            console.log(chalk.white('✓ QRIS Payment'));
+            console.log(chalk.white('✓ Owner Contact'));
+            console.log(chalk.white('✓ Group Features'));
+            console.log(chalk.white('✓ Admin System\n'));
             
             console.log(chalk.green('🚀 BOT SIAP DIGUNAKAN!'));
+            console.log(chalk.green('📱 Kirim .menu untuk mulai\n'));
         }
     });
 
-    // Handle messages
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg.message || msg.key.fromMe) return;
@@ -157,57 +183,17 @@ async function connectToWhatsApp() {
         try {
             await messageHandler(sock, msg);
         } catch (error) {
-            console.error(chalk.red('❌ Error handling message:'), error);
+            console.error('Error:', error.message);
         }
     });
 
-    // Handle group events
-    sock.ev.on('group-participants.update', async (update) => {
-        try {
-            const groupModule = require('./libs/group');
-            await groupModule.handleParticipantsUpdate(sock, update);
-        } catch (error) {
-            console.error(chalk.red('❌ Error handling group update:'), error);
-        }
-    });
-
-    // Save credentials
     sock.ev.on('creds.update', saveCreds);
     
     return sock;
 }
 
-// Helper function untuk membuat key store
-function makeCacheableSignalKeyStore(keys, logger) {
-    // Implementasi sederhana untuk kiuur/baileys
-    return {
-        async get(key) {
-            return keys.get(key);
-        },
-        async set(key, value) {
-            return keys.set(key, value);
-        }
-    };
-}
-
-// Handle process events
-process.on('SIGINT', () => {
-    console.log(chalk.yellow('\n\n🛑 Bot dimatikan oleh user'));
-    console.log(chalk.yellow('👋 Sampai jumpa!'));
-    process.exit(0);
-});
-
-process.on('uncaughtException', (error) => {
-    console.error(chalk.red('❌ Uncaught Exception:'), error);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.error(chalk.red('❌ Unhandled Rejection at:'), promise, 'reason:', reason);
-});
-
 // Start bot
 connectToWhatsApp().catch(error => {
-    console.error(chalk.red('❌ Fatal error:'), error);
-    console.log(chalk.yellow('🔄 Restarting in 5 seconds...'));
+    console.error('Fatal error:', error);
     setTimeout(connectToWhatsApp, 5000);
 });
