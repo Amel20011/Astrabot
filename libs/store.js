@@ -1,7 +1,8 @@
 const fs = require('fs-extra');
 const path = require('path');
 const utils = require('./utils');
-const approval = require('./approval');
+// Perbaikan: Pastikan file approval.js ada di folder libs
+const approval = require('./approval');  // BARIS 4 - DIPERBAIKI
 
 async function showProductsList(sock, from, settings) {
     try {
