@@ -1,6 +1,6 @@
 const CONFIG = require('../config');
 
-async function sendOwnerContact(sock, from, settings) {
+async function showOwnerInfo(sock, from, settings) {
     const ownerNumber = settings.whatsappNumber || CONFIG.ownerNumber;
     const formattedNumber = ownerNumber.replace(/\D/g, '');
     
@@ -28,13 +28,13 @@ async function sendOwnerContact(sock, from, settings) {
                     type: 2 
                 },
                 { 
-                    buttonId: 'menu_store', 
-                    buttonText: { displayText: '🛍️ LIHAT PRODUK' }, 
+                    buttonId: 'back_menu', 
+                    buttonText: { displayText: '🏠 MENU UTAMA' }, 
                     type: 1 
                 },
                 { 
-                    buttonId: 'menu_payment', 
-                    buttonText: { displayText: '💳 CARA BAYAR' }, 
+                    buttonId: 'menu_store', 
+                    buttonText: { displayText: '🛍️ LIHAT PRODUK' }, 
                     type: 1 
                 }
             ]
@@ -42,11 +42,10 @@ async function sendOwnerContact(sock, from, settings) {
     } catch (error) {
         console.error('Error sending owner contact:', error);
         
-        // Fallback tanpa button
         await sock.sendMessage(from, {
             text: contactText + `\n\n🔗 Link chat: https://wa.me/${formattedNumber}`
         });
     }
 }
 
-module.exports = { sendOwnerContact };
+module.exports = { showOwnerInfo };
