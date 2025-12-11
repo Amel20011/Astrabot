@@ -1,27 +1,28 @@
 const pino = require('pino');
 
 module.exports = {
-    // Session folder
+    // Folder untuk session
     authFolder: './auth_info',
     
-    // Browser info
-    browser: ['Toko Digital Bot', 'Chrome', '3.0.0'],
+    // Info browser
+    browser: ['Toko Liviaa', 'Chrome', '5.0.0'],
     
     // Logger
     logger: pino({ level: 'silent' }),
     
-    // Default prefix
-    prefix: '!',
+    // Prefix default (titik)
+    prefix: '.',
     
-    // Owner number (ganti dengan nomor Anda)
-    ownerNumber: '6281234567890',
+    // Nomor owner (Liviaa)
+    ownerNumber: '13658700681',
+    ownerName: 'Liviaa',
     
     // Payment config
     payment: {
         qrisPath: './assets/qris.png',
-        bankName: 'BCA',
+        bankName: 'Bank Liviaa',
         bankAccount: '1234567890',
-        accountName: 'TOKO DIGITAL'
+        accountName: 'LIVIAA STORE'
     },
     
     // Paths
@@ -29,9 +30,9 @@ module.exports = {
     assetsPath: './assets',
     
     // Store info
-    storeName: 'Toko Digital Pro',
+    storeName: 'Toko Digital Liviaa',
     
-    // Default settings
+    // Settings
     isOpen: true,
     openingHours: '24 Jam',
     
@@ -42,22 +43,14 @@ module.exports = {
         autoReply: true,
         useButtons: true,
         useLists: true,
-        approvalSystem: true,
-        broadcastSystem: true
+        approvalSystem: true
     },
     
     // Welcome messages
     welcome: {
-        private: '👋 Halo! Selamat datang di toko digital kami. Ketik !menu untuk melihat menu.',
-        group: '👋 Selamat datang di grup! Bot toko digital siap melayani.',
-        groupVideo: null // URL video untuk welcome grup
-    },
-    
-    // Auto reply settings
-    autoReply: {
-        greeting: true,
-        thankyou: true,
-        question: true
+        private: '👋 Halo! Selamat datang di toko digital Liviaa. Ketik .menu untuk melihat menu.',
+        group: '👋 Selamat datang di grup! Bot toko digital Liviaa siap melayani.',
+        groupVideo: null
     },
     
     // Group settings
@@ -65,12 +58,6 @@ module.exports = {
         antiLink: true,
         maxWarnings: 3,
         welcomeVideo: null
-    },
-    
-    // Admin settings
-    admin: {
-        maxAdmins: 5,
-        allowedCommands: ['broadcast', 'addadmin', 'setprefix', 'antilink', 'setwelcome']
     },
     
     // Store settings
@@ -83,8 +70,7 @@ module.exports = {
     // Bot behavior
     behavior: {
         autoReadMessages: true,
-        autoTyping: false,
-        autoRecording: false,
-        rejectCalls: true
+        rejectCalls: true,
+        syncFullHistory: false
     }
 };
