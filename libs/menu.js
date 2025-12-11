@@ -1,10 +1,8 @@
-const fs = require('fs-extra');
-const path = require('path');
 const CONFIG = require('../config');
 
-async function showMenu(sock, from) {
+async function showMenu(sock, from, settings) {
     const menuText = `
-🎪 *MENU TOKO ONLINE* 🎪
+🎪 *MENU TOKO ONLINE - ${settings.storeName}* 🎪
 
 🏪 *TOKO*
 • ${CONFIG.prefix}store - Lihat produk yang dijual
@@ -25,18 +23,27 @@ ${from.includes(CONFIG.ownerNumber.replace('+', '')) ? `• ${CONFIG.prefix}sett
 📌 *Contoh Penggunaan:*
 ${CONFIG.prefix}beli 1 2
 ${CONFIG.prefix}store
+
+📍 *Status:* ${settings.isOpen ? '🟢 BUKA' : '🔴 TUTUP'}
+⏰ *Jam:* ${settings.openingHours}
     `;
     
-    await sock.sendMessage(from, {
-        text: menuText,
-        footer: 'Bot Toko Online © 2024',
-        buttons: [
-            { buttonId: `${CONFIG.prefix}store`, buttonText: { displayText: '🏪 Lihat Produk' }, type: 1 },
-            { buttonId: `${CONFIG.prefix}owner`, buttonText: { displayText: '👤 Hubungi Owner' }, type: 1 },
-            { buttonId: `${CONFIG.prefix}payment`, buttonText: { displayText: '💳 Cara Bayar' }, type: 1 }
-        ],
-        headerType: 1
-    });
+    try {
+        await sock.sendMessage(from, {
+            text: menuText,
+            footer: 'Bot Toko Online © 2024',
+            buttons: [
+                { buttonId: `${CONFIG.prefix}store`, buttonText: { displayText: '🏪 Lihat Produk' }, type: 1 },
+                { buttonId: `${CONFIG.prefix}owner`, buttonText: { displayText: '👤 Hubungi Owner' }, type: 1 },
+                { buttonId: `${CONFIG.prefix}payment`, buttonText: { displayText: '💳 Cara Bayar' }, type: 1 }
+            ],
+            headerType: 1
+        });
+    } catch (error) {
+        console.error('Error sending menu:', error);
+        // Fallback ke pesan biasa tanpa button
+        await sock.sendMessage(from, { text: menuText });
+    }
 }
 
 module.exports = { showMenu };
