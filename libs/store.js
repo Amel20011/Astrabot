@@ -1,165 +1,124 @@
 const fs = require('fs-extra');
 const path = require('path');
 const utils = require('./utils');
-// Perbaikan: Pastikan file approval.js ada di folder libs
-const approval = require('./approval');  // BARIS 4 - DIPERBAIKI
 
-async function showProductsList(sock, from, settings) {
+async function showProductsList(sock, from, settings, page = 1) {
     try {
-        const prefix = settings.prefix || '!';
+        const prefix = settings.prefix || '.';
         const products = await fs.readJson(path.join(__dirname, '../data/products.json'));
         
         if (products.length === 0) {
             await utils.sendMessage(sock, from, {
-                text: '📭 *BELUM ADA PRODUK*\n\nMaaf, belum ada produk yang tersedia saat ini.'
+                text: '📭 *BELUM ADA PRODUK*\n\nMaaf, belum ada produk yang tersedia.'
             });
             return;
         }
         
-        // Format list produk
-        let productList = `🛍️ *LIST PRODUK TOKO DIGITAL*\n\n`;
+        // Pagination
+        const itemsPerPage = 5;
+        const totalPages = Math.ceil(products.length / itemsPerPage);
+        page = Math.max(1, Math.min(page, totalPages));
         
-        products.forEach((product, index) => {
+        const startIndex = (page - 1) * itemsPerPage;
+        const pageProducts = products.slice(startIndex, startIndex + itemsPerPage);
+        
+        // Buat list produk
+        let productList = `🛍️ *PRODUK TOKO LIVIAA*\n`;
+        productList += `Halaman ${page}/${totalPages}\n\n`;
+        
+        pageProducts.forEach((product, index) => {
+            const globalIndex = startIndex + index + 1;
             const stockStatus = product.stock > 0 ? `✅ (${product.stock})` : '❌ HABIS';
-            productList += `[${product.id}]. ${product.name} ${stockStatus}\n`;
+            productList += `[${globalIndex}]. ${product.name} ${stockStatus}\n`;
             productList += `   💰 Rp ${product.price.toLocaleString('id-ID')}\n`;
-            productList += `   📝 ${product.description}\n`;
-            if (index < products.length - 1) {
-                productList += `   ─────────────────\n`;
-            }
+            productList += `   📝 ${product.description.substring(0, 50)}...\n`;
+            productList += `   ───────────────\n`;
         });
         
         productList += `\n📌 *CARA ORDER:*\n`;
-        productList += `1. Pilih nomor produk (1-${products.length})\n`;
-        productList += `2. Ketik: ${prefix}beli [nomor]\n`;
-        productList += `3. Contoh: ${prefix}beli 1\n\n`;
+        productList += `Ketik: ${prefix}beli [nomor]\n`;
+        productList += `Contoh: ${prefix}beli 1\n\n`;
         productList += `⚠️ *CATATAN:*\n`;
-        productList += `• Stok real-time\n`;
         productList += `• Produk digital instant\n`;
-        productList += `• Support 24 jam`;
+        productList += `• Support 24 jam\n`;
+        productList += `• Garansi replace`;
         
         try {
-            // Coba gunakan list message
-            const sections = [{
-                title: `🛍️ PRODUK (${products.length} items)`,
-                rows: products.map(product => ({
-                    title: `${product.name} - Rp ${product.price.toLocaleString('id-ID')}`,
-                    rowId: `${prefix}beli ${product.id} 1`,
-                    description: product.stock > 0 ? `Stok: ${product.stock}` : 'HABIS'
-                }))
-            }];
-            
-            sections.push({
-                title: "📋 NAVIGASI",
-                rows: [
-                    { title: "🔙 Kembali ke Menu", rowId: `${prefix}menu`, description: "Kembali ke menu utama" },
-                    { title: "🛒 Lihat Keranjang", rowId: `${prefix}keranjang`, description: "Lihat keranjang belanja" }
-                ]
-            });
-            
-            await sock.sendMessage(from, {
-                text: `Pilih produk yang ingin dibeli:`,
-                footer: `Total ${products.length} produk tersedia`,
-                title: "🛍️ DAFTAR PRODUK",
-                buttonText: "📋 PILIH PRODUK",
-                sections: sections
-            });
-            
-        } catch (error) {
-            console.log('⚠️ List not supported, using buttons');
-            
-            // Fallback ke buttons (maks 3 button per baris)
+            // Buat buttons untuk produk
             const buttons = [];
-            products.slice(0, 9).forEach((product, index) => {
-                if (index < 3) {
+            
+            // Buttons untuk produk di halaman ini
+            pageProducts.forEach((product, index) => {
+                const globalIndex = startIndex + index + 1;
+                if (buttons.length < 3) {
                     buttons.push({
-                        buttonId: `beli_${product.id}`,
-                        buttonText: { displayText: `🛒 ${index + 1}` },
+                        buttonId: `buy_${product.id}`,
+                        buttonText: { displayText: `🛒 ${globalIndex}` },
                         type: 1
                     });
                 }
             });
             
-            // Tambahkan navigasi
-            if (buttons.length < 3) {
-                buttons.push(
-                    { buttonId: 'back_menu', buttonText: { displayText: '🔙 KEMBALI' }, type: 1 },
-                    { buttonId: 'cart_view', buttonText: { displayText: '🛒 KERANJANG' }, type: 1 }
-                );
+            // Navigation buttons
+            const navButtons = [];
+            if (page > 1) {
+                navButtons.push({
+                    buttonId: `page_${page-1}`,
+                    buttonText: { displayText: '⬅️ SEBELUM' },
+                    type: 1
+                });
             }
+            
+            navButtons.push({
+                buttonId: 'menu_store',
+                buttonText: { displayText: '🔄 REFRESH' },
+                type: 1
+            });
+            
+            if (page < totalPages) {
+                navButtons.push({
+                    buttonId: `page_${page+1}`,
+                    buttonText: { displayText: 'SELANJUT ➡️' },
+                    type: 1
+                });
+            }
+            
+            // Tambah navigasi di baris kedua
+            buttons.push(...navButtons);
             
             await sock.sendMessage(from, {
                 text: productList,
-                footer: 'Pilih nomor produk atau ketik !beli [nomor]',
-                buttons: buttons
+                footer: `Total ${products.length} produk | Halaman ${page}/${totalPages}`,
+                buttons: buttons.slice(0, 6) // Maks 6 button
+            });
+            
+        } catch (error) {
+            console.error('Error with buttons:', error);
+            
+            // Kirim teks biasa tanpa button
+            let navText = '\n\n📋 *NAVIGASI:*\n';
+            if (page > 1) navText += `${prefix}store ${page-1} - Sebelumnya\n`;
+            if (page < totalPages) navText += `${prefix}store ${page+1} - Selanjutnya\n`;
+            navText += `${prefix}menu - Menu utama`;
+            
+            await utils.sendMessage(sock, from, {
+                text: productList + navText
             });
         }
         
     } catch (error) {
         console.error('Error showing products:', error);
         await utils.sendMessage(sock, from, {
-            text: '❌ Gagal memuat daftar produk. Silakan coba lagi.'
-        });
-    }
-}
-
-async function showProductPayment(sock, from, productId, settings) {
-    try {
-        const prefix = settings.prefix || '!';
-        const products = await fs.readJson(path.join(__dirname, '../data/products.json'));
-        const product = products.find(p => p.id == productId);
-        
-        if (!product) {
-            await utils.sendMessage(sock, from, {
-                text: '❌ Produk tidak ditemukan.'
-            });
-            return;
-        }
-        
-        if (product.stock <= 0) {
-            await utils.sendMessage(sock, from, {
-                text: `❌ Maaf, stok ${product.name} habis.`
-            });
-            return;
-        }
-        
-        const paymentText = `💰 *PEMBAYARAN ${product.name}*\n\n`
-            + `📦 Produk: ${product.name}\n`
-            + `📝 Deskripsi: ${product.description}\n`
-            + `💳 Harga: Rp ${product.price.toLocaleString('id-ID')}\n`
-            + `📊 Stok: ${product.stock}\n\n`
-            + `📌 *CARA BAYAR:*\n`
-            + `1. Transfer via QRIS/Transfer\n`
-            + `2. Setelah bayar, kirim bukti\n`
-            + `3. Produk akan dikirim via chat\n\n`
-            + `⚠️ *PERHATIAN:*\n`
-            + `• Harap screenshot bukti transfer\n`
-            + `• Chat owner untuk konfirmasi\n`
-            + `• Support 24 jam`;
-        
-        await sock.sendMessage(from, {
-            text: paymentText,
-            footer: 'Lanjutkan pembayaran',
-            buttons: [
-                { buttonId: 'payment_qris', buttonText: { displayText: '📱 BAYAR QRIS' }, type: 1 },
-                { buttonId: 'contact_owner', buttonText: { displayText: '👤 KONFIRMASI' }, type: 1 },
-                { buttonId: 'back_menu', buttonText: { displayText: '🔙 KEMBALI' }, type: 1 }
-            ]
-        });
-        
-    } catch (error) {
-        console.error('Error showing payment:', error);
-        await utils.sendMessage(sock, from, {
-            text: '❌ Gagal memuat info pembayaran.'
+            text: '❌ Gagal memuat produk. Silakan coba lagi.'
         });
     }
 }
 
 async function processOrder(sock, from, productId, quantity = 1, settings) {
     try {
-        const prefix = settings.prefix || '!';
+        const prefix = settings.prefix || '.';
         const products = await fs.readJson(path.join(__dirname, '../data/products.json'));
-        const product = products.find(p => p.id == productId);
+        const product = products.find(p => p.id == productId || p.id == parseInt(productId));
         
         if (!product) {
             await utils.sendMessage(sock, from, {
@@ -215,8 +174,17 @@ async function processOrder(sock, from, productId, quantity = 1, settings) {
                 + `Owner akan menghubungi Anda untuk pengiriman produk.`
         });
         
-        // Kirim permintaan persetujuan ke owner
-        await approval.sendApprovalRequest(sock, from, orderId, newOrder, settings);
+        // Kirim notifikasi ke owner
+        const ownerJid = settings.whatsappNumber + '@s.whatsapp.net';
+        await sock.sendMessage(ownerJid, {
+            text: `📦 *ORDER BARU!*\n\n`
+                + `🆔 ID: ${orderId}\n`
+                + `👤 Pembeli: ${buyerNumber}\n`
+                + `📦 Produk: ${product.name}\n`
+                + `📊 Jumlah: ${quantity}\n`
+                + `💰 Total: Rp ${(product.price * quantity).toLocaleString('id-ID')}\n\n`
+                + `⏰ Waktu: ${new Date().toLocaleString('id-ID')}`
+        });
         
     } catch (error) {
         console.error('Error processing order:', error);
@@ -228,14 +196,17 @@ async function processOrder(sock, from, productId, quantity = 1, settings) {
 
 async function showCart(sock, from, settings) {
     try {
-        const prefix = settings.prefix || '!';
+        const prefix = settings.prefix || '.';
         const orders = await fs.readJson(path.join(__dirname, '../data/orders.json'));
         const buyerNumber = from.split('@')[0];
-        const userOrders = orders.filter(order => order.buyer === buyerNumber && order.status === 'pending');
+        const userOrders = orders.filter(order => 
+            order.buyer === buyerNumber && 
+            (order.status === 'pending' || order.status === 'processing')
+        );
         
         if (userOrders.length === 0) {
             await utils.sendMessage(sock, from, {
-                text: '🛒 *KERANJANG KOSONG*\n\nBelum ada order yang aktif. Silakan pilih produk dari menu.'
+                text: '🛒 *KERANJANG KOSONG*\n\nBelum ada order aktif. Silakan pilih produk!'
             });
             return;
         }
@@ -243,12 +214,12 @@ async function showCart(sock, from, settings) {
         let cartText = '🛒 *ORDER ANDA*\n\n';
         let totalAll = 0;
         
-        userOrders.forEach(order => {
+        userOrders.forEach((order, index) => {
             cartText += `📦 *${order.productName}*\n`;
             cartText += `   Jumlah: ${order.quantity}\n`;
             cartText += `   Total: Rp ${order.total.toLocaleString('id-ID')}\n`;
             cartText += `   Status: ${order.status.toUpperCase()}\n`;
-            cartText += `   ─────────────────\n`;
+            cartText += `   ───────────────\n`;
             totalAll += order.total;
         });
         
@@ -262,9 +233,9 @@ async function showCart(sock, from, settings) {
             text: cartText,
             footer: 'Lakukan pembayaran untuk melanjutkan',
             buttons: [
-                { buttonId: 'payment_qris', buttonText: { displayText: '💳 BAYAR SEKARANG' }, type: 1 },
-                { buttonId: 'contact_owner', buttonText: { displayText: '👤 CHAT OWNER' }, type: 1 },
-                { buttonId: 'back_menu', buttonText: { displayText: '🔙 MENU UTAMA' }, type: 1 }
+                { buttonId: 'menu_payment', buttonText: { displayText: '💳 BAYAR SEKARANG' }, type: 1 },
+                { buttonId: 'menu_owner', buttonText: { displayText: '👤 CHAT OWNER' }, type: 1 },
+                { buttonId: 'menu_store', buttonText: { displayText: '🛍️ TAMBAH PRODUK' }, type: 1 }
             ]
         });
         
@@ -277,31 +248,48 @@ async function showCart(sock, from, settings) {
 }
 
 async function showStoreStatus(sock, from, settings) {
-    const products = await fs.readJson(path.join(__dirname, '../data/products.json'));
-    const totalProducts = products.length;
-    const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
-    
-    await sock.sendMessage(from, {
-        text: `🏪 *STATUS TOKO DIGITAL*\n\n`
-            + `📝 Nama: ${settings.storeName}\n`
-            + `📊 Status: ${settings.isOpen ? '🟢 BUKA 24 JAM' : '🔴 TUTUP'}\n`
-            + `⏰ Layanan: 24 Jam Nonstop\n`
-            + `👤 Owner: ${settings.ownerName}\n`
-            + `📞 WA: ${settings.whatsappNumber}\n\n`
-            + `📦 *STATISTIK:*\n`
-            + `• Total Produk: ${totalProducts}\n`
-            + `• Total Stok: ${totalStock}\n\n`
-            + `📌 *INFO PENTING:*\n`
-            + `• Produk digital instant\n`
-            + `• Support 24 jam\n`
-            + `• Garansi replace jika bermasalah\n`
-            + `• Pembayaran via QRIS/Transfer`
-    });
+    try {
+        const products = await fs.readJson(path.join(__dirname, '../data/products.json'));
+        const orders = await fs.readJson(path.join(__dirname, '../data/orders.json'));
+        
+        const totalProducts = products.length;
+        const availableProducts = products.filter(p => p.stock > 0).length;
+        const totalOrders = orders.length;
+        const pendingOrders = orders.filter(o => o.status === 'pending').length;
+        
+        await sock.sendMessage(from, {
+            text: `🏪 *STATUS TOKO LIVIAA*\n\n`
+                + `📝 Nama: ${settings.storeName}\n`
+                + `📊 Status: ${settings.isOpen ? '🟢 BUKA 24 JAM' : '🔴 TUTUP'}\n`
+                + `⏰ Layanan: 24 Jam Nonstop\n`
+                + `👤 Owner: ${settings.ownerName}\n`
+                + `📞 WA: ${settings.whatsappNumber}\n\n`
+                + `📦 *STATISTIK:*\n`
+                + `• Total Produk: ${totalProducts}\n`
+                + `• Produk Tersedia: ${availableProducts}\n`
+                + `• Total Order: ${totalOrders}\n`
+                + `• Order Pending: ${pendingOrders}\n\n`
+                + `📌 *INFO PENTING:*\n`
+                + `• Produk digital instant\n`
+                + `• Support 24 jam\n`
+                + `• Garansi replace jika bermasalah\n`
+                + `• Pembayaran via QRIS/Transfer`
+        });
+        
+    } catch (error) {
+        console.error('Error showing status:', error);
+        await sock.sendMessage(from, {
+            text: `🏪 *STATUS TOKO*\n\n`
+                + `📝 Nama: ${settings.storeName}\n`
+                + `📊 Status: ${settings.isOpen ? '🟢 BUKA' : '🔴 TUTUP'}\n`
+                + `👤 Owner: ${settings.ownerName}\n`
+                + `📞 WA: ${settings.whatsappNumber}`
+        });
+    }
 }
 
 module.exports = {
     showProductsList,
-    showProductPayment,
     processOrder,
     showCart,
     showStoreStatus
