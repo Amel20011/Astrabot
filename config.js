@@ -1,3 +1,5 @@
+const pino = require('pino');
+
 module.exports = {
     // Folder untuk menyimpan session
     authFolder: './auth',
@@ -5,10 +7,8 @@ module.exports = {
     // Info browser untuk WhatsApp Web
     browser: ['Bot Toko Online', 'Chrome', '1.0.0'],
     
-    // Logger setting
-    logger: {
-        level: 'silent' // bisa diubah ke 'debug' untuk troubleshooting
-    },
+    // Logger setting - FIXED dengan pino
+    logger: pino({ level: 'silent' }),
     
     // Prefix command
     prefix: '!',
@@ -25,5 +25,12 @@ module.exports = {
     },
     
     // Database path
-    dataPath: './data'
+    dataPath: './data',
+    
+    // Store name
+    storeName: 'Toko Online',
+    
+    // Default settings
+    isOpen: true,
+    openingHours: '09:00 - 21:00'
 };
