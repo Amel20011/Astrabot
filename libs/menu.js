@@ -4,19 +4,20 @@ const utils = require('./utils');
 async function showMainMenu(sock, from, settings) {
     const prefix = settings.prefix || CONFIG.prefix;
     
-    const menuText = `🎪 *TOKO DIGITAL PREMIUM* 🎪
+    const menuText = `🎪 *TOKO DIGITAL LIVIAA* 🎪
 
-Selamat datang di toko digital kami!
+Selamat datang di toko digital Liviaa!
 Kami menyediakan berbagai akun premium dengan harga terjangkau.
 
-📊 *Status Toko:* ${settings.isOpen ? '🟢 BUKA 24 JAM' : '🔴 TUTUP'}
+📊 *Status:* ${settings.isOpen ? '🟢 BUKA 24 JAM' : '🔴 TUTUP'}
 ⏰ *Layanan:* 24 Jam Nonstop
-👤 *Support:* ${settings.ownerName}
+👤 *Owner:* ${settings.ownerName}
+🔧 *Prefix:* ${prefix}
 
 Pilih menu di bawah ini:`;
     
     try {
-        // Coba gunakan LIST MESSAGE (3 garis) terlebih dahulu
+        // Coba gunakan LIST MESSAGE (3 garis)
         if (settings.features?.useLists !== false) {
             try {
                 await sock.sendMessage(from, {
@@ -28,24 +29,24 @@ Pilih menu di bawah ini:`;
                         {
                             title: "🛍️ BELANJA",
                             rows: [
-                                { title: "📦 Lihat Produk", rowId: `${prefix}store`, description: "Lihat semua produk yang dijual" },
-                                { title: "🛒 Keranjang Saya", rowId: `${prefix}keranjang`, description: "Lihat keranjang belanja" },
+                                { title: "📦 Lihat Produk", rowId: "menu_store", description: "Lihat semua produk" },
+                                { title: "🛒 Keranjang Saya", rowId: "menu_cart", description: "Lihat keranjang belanja" },
                                 { title: "💰 Checkout", rowId: `${prefix}checkout`, description: "Lakukan pembayaran" }
                             ]
                         },
                         {
                             title: "💳 PEMBAYARAN",
                             rows: [
-                                { title: "📱 Bayar QRIS", rowId: `${prefix}qris`, description: "Pembayaran via QRIS" },
+                                { title: "📱 Bayar QRIS", rowId: "menu_payment", description: "Pembayaran via QRIS" },
                                 { title: "🏦 Info Transfer", rowId: `${prefix}payment`, description: "Info transfer bank" },
-                                { title: "❤️ Donasi", rowId: `${prefix}donasi`, description: "Support pengembangan" }
+                                { title: "❤️ Donasi", rowId: "menu_donate", description: "Support pengembangan" }
                             ]
                         },
                         {
                             title: "👤 BANTUAN",
                             rows: [
-                                { title: "📞 Hubungi Owner", rowId: `${prefix}owner`, description: "Chat langsung dengan owner" },
-                                { title: "🏪 Status Toko", rowId: `${prefix}status`, description: "Cek status toko" },
+                                { title: "📞 Hubungi Owner", rowId: "menu_owner", description: "Chat langsung dengan owner" },
+                                { title: "🏪 Status Toko", rowId: "menu_status", description: "Cek status toko" },
                                 { title: "ℹ️ Info Bot", rowId: `${prefix}info`, description: "Informasi tentang bot" }
                             ]
                         }
@@ -53,18 +54,19 @@ Pilih menu di bawah ini:`;
                 });
                 return;
             } catch (error) {
-                console.log('⚠️ List message not supported, using buttons instead');
+                console.log('⚠️ List message error, using buttons:', error.message);
             }
         }
         
-        // Fallback ke BUTTONS jika list tidak support
+        // Fallback ke BUTTONS
         await sock.sendMessage(from, {
             text: menuText,
             footer: 'Pilih menu yang tersedia',
             buttons: [
-                { buttonId: 'store_products', buttonText: { displayText: '🛍️ LIHAT PRODUK' }, type: 1 },
-                { buttonId: 'contact_owner', buttonText: { displayText: '👤 HUBUNGI OWNER' }, type: 1 },
-                { buttonId: 'cart_view', buttonText: { displayText: '🛒 KERANJANG' }, type: 1 }
+                { buttonId: 'menu_store', buttonText: { displayText: '🛍️ PRODUK' }, type: 1 },
+                { buttonId: 'menu_owner', buttonText: { displayText: '👤 OWNER' }, type: 1 },
+                { buttonId: 'menu_payment', buttonText: { displayText: '💳 BAYAR' }, type: 1 },
+                { buttonId: 'menu_donate', buttonText: { displayText: '❤️ DONASI' }, type: 1 }
             ],
             headerType: 1
         });
@@ -75,7 +77,7 @@ Pilih menu di bawah ini:`;
         // Fallback ke text biasa
         const fallbackText = menuText + `\n\n📌 *PERINTAH:*\n`
             + `• ${prefix}store - Lihat produk\n`
-            + `• ${prefix}beli [no] - Beli produk\n`
+            + `• ${prefix}beli [id] - Beli produk\n`
             + `• ${prefix}keranjang - Keranjang\n`
             + `• ${prefix}owner - Hubungi owner\n`
             + `• ${prefix}donasi - Donasi\n`
@@ -86,59 +88,4 @@ Pilih menu di bawah ini:`;
     }
 }
 
-// Menu khusus admin
-async function showAdminMenu(sock, from, settings) {
-    const prefix = settings.prefix || CONFIG.prefix;
-    
-    const adminText = `⚙️ *MENU ADMIN TOKO*\n\n`
-        + `Halo Admin! Berikut perintah yang tersedia:`;
-    
-    try {
-        await sock.sendMessage(from, {
-            text: adminText,
-            footer: 'Pilih perintah admin',
-            title: '⚙️ ADMIN MENU',
-            buttonText: '📋 BUKA MENU ADMIN',
-            sections: [
-                {
-                    title: "👥 ADMIN MANAGEMENT",
-                    rows: [
-                        { title: "➕ Tambah Admin", rowId: `${prefix}addadmin`, description: "Tambahkan admin baru" },
-                        { title: "📋 List Admin", rowId: `${prefix}listadmin`, description: "Lihat daftar admin" },
-                        { title: "🔧 Set Prefix", rowId: `${prefix}setprefix`, description: "Ubah prefix bot" }
-                    ]
-                },
-                {
-                    title: "🏪 TOKO MANAGEMENT",
-                    rows: [
-                        { title: "📦 Kelola Produk", rowId: `${prefix}addproduct`, description: "Tambah/edit produk" },
-                        { title: "📋 Lihat Orders", rowId: `${prefix}orders`, description: "Lihat semua order" },
-                        { title: "⚙️ Settings", rowId: `${prefix}settings`, description: "Pengaturan bot" }
-                    ]
-                },
-                {
-                    title: "📢 BROADCAST",
-                    rows: [
-                        { title: "📢 Broadcast Message", rowId: `${prefix}broadcast`, description: "Kirim pesan ke semua user" }
-                    ]
-                }
-            ]
-        });
-    } catch (error) {
-        // Fallback ke text
-        const fallbackText = adminText + `\n\n📋 *ADMIN COMMANDS:*\n`
-            + `• ${prefix}addadmin [nomor]\n`
-            + `• ${prefix}listadmin\n`
-            + `• ${prefix}setprefix [karakter]\n`
-            + `• ${prefix}addproduct [nama] [harga] [stok]\n`
-            + `• ${prefix}orders\n`
-            + `• ${prefix}settings\n`
-            + `• ${prefix}broadcast [pesan]\n`
-            + `• ${prefix}antilink enable/disable (di grup)\n`
-            + `• ${prefix}setwelcome [teks] (di grup)`;
-        
-        await utils.sendMessage(sock, from, { text: fallbackText });
-    }
-}
-
-module.exports = { showMainMenu, showAdminMenu };
+module.exports = { showMainMenu };
