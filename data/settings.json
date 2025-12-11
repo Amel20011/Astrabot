@@ -1,0 +1,9 @@
+{
+  "storeName": "Toko Online Saya",
+  "ownerName": "Pemilik Toko",
+  "whatsappNumber": "6281234567890",
+  "isOpen": true,
+  "openingHours": "09:00 - 21:00",
+  "address": "Jl. Contoh No. 123, Kota Anda, Indonesia",
+  "qrisPath": "./assets/qris.png"
+}
