@@ -1,5 +1,4 @@
 const CONFIG = require('../config');
-const utils = require('./utils');
 
 async function showMainMenu(sock, from, settings) {
     const prefix = settings.prefix || CONFIG.prefix;
@@ -17,7 +16,7 @@ Kami menyediakan berbagai akun premium dengan harga terjangkau.
 Pilih menu di bawah ini:`;
     
     try {
-        // Coba gunakan LIST MESSAGE (3 garis)
+        // Coba pakai LIST MESSAGE (3 garis) dulu
         if (settings.features?.useLists !== false) {
             try {
                 await sock.sendMessage(from, {
@@ -29,7 +28,7 @@ Pilih menu di bawah ini:`;
                         {
                             title: "🛍️ BELANJA",
                             rows: [
-                                { title: "📦 Lihat Produk", rowId: "menu_store", description: "Lihat semua produk" },
+                                { title: "📦 Lihat Produk", rowId: "menu_store", description: "Lihat semua produk yang dijual" },
                                 { title: "🛒 Keranjang Saya", rowId: "menu_cart", description: "Lihat keranjang belanja" },
                                 { title: "💰 Checkout", rowId: `${prefix}checkout`, description: "Lakukan pembayaran" }
                             ]
@@ -54,7 +53,7 @@ Pilih menu di bawah ini:`;
                 });
                 return;
             } catch (error) {
-                console.log('⚠️ List message error, using buttons:', error.message);
+                console.log('⚠️ List not supported, using buttons');
             }
         }
         
@@ -66,7 +65,9 @@ Pilih menu di bawah ini:`;
                 { buttonId: 'menu_store', buttonText: { displayText: '🛍️ PRODUK' }, type: 1 },
                 { buttonId: 'menu_owner', buttonText: { displayText: '👤 OWNER' }, type: 1 },
                 { buttonId: 'menu_payment', buttonText: { displayText: '💳 BAYAR' }, type: 1 },
-                { buttonId: 'menu_donate', buttonText: { displayText: '❤️ DONASI' }, type: 1 }
+                { buttonId: 'menu_donate', buttonText: { displayText: '❤️ DONASI' }, type: 1 },
+                { buttonId: 'menu_cart', buttonText: { displayText: '🛒 KERANJANG' }, type: 1 },
+                { buttonId: 'menu_status', buttonText: { displayText: '🏪 STATUS' }, type: 1 }
             ],
             headerType: 1
         });
@@ -77,14 +78,14 @@ Pilih menu di bawah ini:`;
         // Fallback ke text biasa
         const fallbackText = menuText + `\n\n📌 *PERINTAH:*\n`
             + `• ${prefix}store - Lihat produk\n`
-            + `• ${prefix}beli [id] - Beli produk\n`
+            + `• ${prefix}beli [no] - Beli produk\n`
             + `• ${prefix}keranjang - Keranjang\n`
             + `• ${prefix}owner - Hubungi owner\n`
             + `• ${prefix}donasi - Donasi\n`
             + `• ${prefix}status - Status toko\n`
             + `• ${prefix}info - Info bot`;
         
-        await utils.sendMessage(sock, from, { text: fallbackText });
+        await sock.sendMessage(from, { text: fallbackText });
     }
 }
 
