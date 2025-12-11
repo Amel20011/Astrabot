@@ -10,7 +10,6 @@ async function setAntiLink(sock, groupId, enable) {
         }
         
         groups[groupId].antilink = enable;
-        
         await fs.writeJson(path.join(__dirname, '../data/groups.json'), groups, { spaces: 2 });
         
         await sock.sendMessage(groupId, {
@@ -19,9 +18,6 @@ async function setAntiLink(sock, groupId, enable) {
         
     } catch (error) {
         console.error('Error setting anti-link:', error);
-        await sock.sendMessage(groupId, {
-            text: '❌ Gagal mengatur anti-link.'
-        });
     }
 }
 
@@ -43,12 +39,6 @@ async function setWelcome(sock, groupId, type, content, settings) {
                 type: 'text',
                 content: content || '👋 Selamat datang di grup!'
             };
-        } else if (type === 'video') {
-            groups[groupId].welcome = {
-                enabled: true,
-                type: 'video',
-                content: content || ''
-            };
         } else if (type === 'disable') {
             groups[groupId].welcome.enabled = false;
         }
@@ -56,45 +46,15 @@ async function setWelcome(sock, groupId, type, content, settings) {
         await fs.writeJson(path.join(__dirname, '../data/groups.json'), groups, { spaces: 2 });
         
         await sock.sendMessage(groupId, {
-            text: `✅ Welcome message telah ${type === 'disable' ? 'dinonaktifkan' : 'diatur (' + type + ')'}.`
+            text: `✅ Welcome message telah ${type === 'disable' ? 'dinonaktifkan' : 'diatur'}.`
         });
         
     } catch (error) {
         console.error('Error setting welcome:', error);
-        await sock.sendMessage(groupId, {
-            text: '❌ Gagal mengatur welcome message.'
-        });
-    }
-}
-
-async function handleParticipantsUpdate(sock, update) {
-    try {
-        const { id, participants, action } = update;
-        
-        if (action === 'add') {
-            const groups = await fs.readJson(path.join(__dirname, '../data/groups.json'));
-            const groupData = groups[id] || {};
-            
-            if (groupData.welcome?.enabled) {
-                for (const participant of participants) {
-                    if (groupData.welcome.type === 'text') {
-                        await sock.sendMessage(id, {
-                            text: `👋 @${participant.split('@')[0]} ${groupData.welcome.content || 'Selamat datang di grup!'}`,
-                            mentions: [participant]
-                        });
-                    }
-                    // Untuk video, butuh implementasi lebih lanjut
-                }
-            }
-        }
-        
-    } catch (error) {
-        console.error('Error in participants update:', error);
     }
 }
 
 module.exports = {
     setAntiLink,
-    setWelcome,
-    handleParticipantsUpdate
+    setWelcome
 };
