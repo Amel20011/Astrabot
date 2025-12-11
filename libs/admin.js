@@ -1,6 +1,5 @@
 const fs = require('fs-extra');
 const path = require('path');
-const utils = require('./utils');
 
 async function setPrefix(sock, from, newPrefix, settings) {
     try {
@@ -71,18 +70,9 @@ async function showOrders(sock, from, settings) {
             return;
         }
         
-        const pendingOrders = orders.filter(o => o.status === 'pending');
-        const processingOrders = orders.filter(o => o.status === 'processing');
-        const completedOrders = orders.filter(o => o.status === 'completed');
-        
         let ordersText = `📋 *DAFTAR ORDER (${orders.length})*\n\n`;
-        ordersText += `⏳ Pending: ${pendingOrders.length}\n`;
-        ordersText += `🔄 Processing: ${processingOrders.length}\n`;
-        ordersText += `✅ Completed: ${completedOrders.length}\n\n`;
         
-        // Tampilkan 5 order terbaru
-        const recentOrders = orders.slice(-5).reverse();
-        
+        const recentOrders = orders.slice(-10).reverse();
         recentOrders.forEach((order, index) => {
             ordersText += `[${index + 1}] ${order.id}\n`;
             ordersText += `   👤 ${order.buyer}\n`;
@@ -93,8 +83,7 @@ async function showOrders(sock, from, settings) {
         });
         
         await sock.sendMessage(from, {
-            text: ordersText,
-            footer: 'Gunakan WhatsApp Web untuk detail lebih lanjut'
+            text: ordersText
         });
         
     } catch (error) {
@@ -107,9 +96,8 @@ async function showOrders(sock, from, settings) {
 
 async function broadcast(sock, from, message, settings) {
     try {
-        // Ini contoh sederhana
         await sock.sendMessage(from, {
-            text: `📢 *BROADCAST MESSAGE*\n\n${message}\n\n✅ Pesan siap dikirim.\n\n⚠️ Fitur broadcast dalam pengembangan.`
+            text: `📢 *BROADCAST MESSAGE*\n\n${message}\n\n✅ Pesan siap dikirim.`
         });
         
     } catch (error) {
@@ -124,7 +112,6 @@ async function showSettings(sock, from, settings) {
     try {
         const products = await fs.readJson(path.join(__dirname, '../data/products.json'));
         const orders = await fs.readJson(path.join(__dirname, '../data/orders.json'));
-        const admins = await fs.readJson(path.join(__dirname, '../data/admins.json'));
         
         let settingsText = `⚙️ *PENGATURAN BOT*\n\n`;
         settingsText += `🏪 Nama Toko: ${settings.storeName}\n`;
@@ -135,18 +122,16 @@ async function showSettings(sock, from, settings) {
         
         settingsText += `📦 *STATISTIK:*\n`;
         settingsText += `• Produk: ${products.length}\n`;
-        settingsText += `• Orders: ${orders.length}\n`;
-        settingsText += `• Admins: ${admins.length}\n\n`;
+        settingsText += `• Orders: ${orders.length}\n\n`;
         
         settingsText += `⚡ *FITUR:*\n`;
-        settingsText += `• Anti-link: ${settings.features?.antiLink ? '🟢' : '🔴'}\n`;
-        settingsText += `• Welcome: ${settings.features?.welcomeMessage ? '🟢' : '🔴'}\n`;
         settingsText += `• Buttons: ${settings.features?.useButtons ? '🟢' : '🔴'}\n`;
         settingsText += `• Lists: ${settings.features?.useLists ? '🟢' : '🔴'}\n`;
+        settingsText += `• Anti-link: ${settings.features?.antiLink ? '🟢' : '🔴'}\n`;
+        settingsText += `• Welcome: ${settings.features?.welcomeMessage ? '🟢' : '🔴'}\n`;
         
         await sock.sendMessage(from, {
-            text: settingsText,
-            footer: 'Edit file settings.json untuk perubahan'
+            text: settingsText
         });
         
     } catch (error) {
