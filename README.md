@@ -1,19 +1,32 @@
-# Astrabot
-# 🤖 Bot WhatsApp Toko Online
+# 🤖 BOT TOKO DIGITAL LIVIAA
 
-Bot WhatsApp untuk toko online dengan fitur lengkap: katalog produk, keranjang belanja, pembayaran QRIS, dan pengaturan.
+Bot WhatsApp untuk toko digital dengan fitur lengkap.
 
-## 📋 Fitur
-- 🏪 Katalog produk dengan deskripsi dan harga
-- 🛒 Sistem keranjang belanja
-- 💳 Pembayaran QRIS & transfer bank
-- 👤 Info owner dengan button WhatsApp
-- ⚙️ Pengaturan toko (owner only)
-- 📱 Responsif dengan button template
+## 📋 FITUR
+- ✅ Store dengan list produk
+- ✅ Button & List menu (3 garis)
+- ✅ QRIS Payment
+- ✅ Anti-link grup
+- ✅ Welcome message
+- ✅ Admin system
+- ✅ Prefix custom (. ! / dll)
+- ✅ Approval system
+- ✅ 24/7 support
 
-## 🚀 Instalasi
+## 🚀 INSTALASI
 
-1. **Clone/Download proyek**
 ```bash
-git clone https://github.com/username/bot-toko.git
-cd bot-toko
+# 1. Clone/download proyek
+# 2. Masuk ke folder
+cd bot-toko-wa
+
+# 3. Jalankan setup
+node setup.js
+
+# 4. Install dependencies
+npm install
+
+# 5. Edit config.js jika perlu
+# 6. Taruh QRIS di assets/qris.png
+# 7. Jalankan bot
+npm start
