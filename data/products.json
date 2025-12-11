@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "name": "Kaos Basic Premium",
+    "description": "Kaos katun 100% premium quality, nyaman dipakai sehari-hari",
+    "price": 85000,
+    "stock": 50,
+    "category": "Fashion"
+  },
+  {
+    "id": 2,
+    "name": "Sepatu Sneakers",
+    "description": "Sepatu sneakers casual dengan desain modern dan nyaman",
+    "price": 250000,
+    "stock": 30,
+    "category": "Fashion"
+  },
+  {
+    "id": 3,
+    "name": "Powerbank 10000mAh",
+    "description": "Powerbank fast charging dengan kapasitas besar dan dual port",
+    "price": 150000,
+    "stock": 25,
+    "category": "Elektronik"
+  },
+  {
+    "id": 4,
+    "name": "Tas Ransel Waterproof",
+    "description": "Tas ransel anti air dengan banyak kompartemen dan laptop sleeve",
+    "price": 180000,
+    "stock": 40,
+    "category": "Aksesoris"
+  },
+  {
+    "id": 5,
+    "name": "Smartwatch Basic",
+    "description": "Smartwatch dengan fitur notifikasi, heart rate monitor",
+    "price": 350000,
+    "stock": 15,
+    "category": "Elektronik"
+  }
+]
