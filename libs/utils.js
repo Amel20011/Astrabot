@@ -9,22 +9,12 @@ function validatePhoneNumber(phone) {
     return clean.length >= 10 && clean.length <= 15;
 }
 
-// Send message dengan fallback
+// Send message
 async function sendMessage(sock, to, content) {
     try {
         return await sock.sendMessage(to, content);
     } catch (error) {
         console.error('Error sending message:', error);
-        
-        // Fallback ke text saja
-        if (content.text) {
-            try {
-                return await sock.sendMessage(to, { text: content.text });
-            } catch (fallbackError) {
-                console.error('Fallback error:', fallbackError);
-            }
-        }
-        
         return null;
     }
 }
