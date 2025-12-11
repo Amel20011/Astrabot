@@ -1,48 +1,52 @@
-const fs = require('fs-extra');
-const path = require('path');
+const CONFIG = require('../config');
 
-async function showOwnerInfo(sock, from) {
+async function sendOwnerContact(sock, from, settings) {
+    const ownerNumber = settings.whatsappNumber || CONFIG.ownerNumber;
+    const formattedNumber = ownerNumber.replace(/\D/g, '');
+    
+    const contactText = `👤 *INFORMASI OWNER*\n\n`
+        + `🏪 Toko: ${settings.storeName}\n`
+        + `👤 Nama: ${settings.ownerName}\n`
+        + `📞 WhatsApp: ${ownerNumber}\n\n`
+        + `📌 *CARA HUBUNGI:*\n`
+        + `1. Klik link di bawah untuk chat langsung\n`
+        + `2. Atau save nomor: ${ownerNumber}\n`
+        + `3. Langsung chat untuk konfirmasi order\n\n`
+        + `⚠️ *PERHATIAN:*\n`
+        + `• Chat untuk konfirmasi pembayaran\n`
+        + `• Jangan lupa kirim bukti transfer\n`
+        + `• Response dalam 5-10 menit`;
+    
     try {
-        const settings = await fs.readJson(path.join(__dirname, '../data/settings.json'));
-        
-        const ownerInfo = `
-👤 *INFORMASI PEMILIK TOKO*
-
-🏪 *Nama Toko:* ${settings.storeName}
-👤 *Owner:* ${settings.ownerName}
-📞 *WhatsApp:* ${settings.whatsappNumber}
-📍 *Alamat:* ${settings.address}
-⏰ *Jam Operasi:* ${settings.openingHours}
-
-📞 *Hubungi Owner:*
-https://wa.me/${settings.whatsappNumber.replace('+', '')}
-
-📋 *Cara Order:*
-1. Pilih produk dengan *!store*
-2. Tambah ke keranjang dengan *!beli [id] [jumlah]*
-3. Cek keranjang dengan *!keranjang*
-4. Checkout dengan *!checkout*
-5. Bayar dengan *!bayar*
-6. Konfirmasi ke owner
-
-*Terima kasih telah berbelanja!* 🛍️
-        `;
-        
         await sock.sendMessage(from, {
-            text: ownerInfo,
-            footer: 'Hubungi owner untuk pertanyaan lebih lanjut',
+            text: contactText,
+            footer: 'Hubungi owner untuk bantuan',
             buttons: [
-                { buttonId: 'https://wa.me/' + settings.whatsappNumber.replace('+', ''), buttonText: { displayText: '📞 Chat Owner' }, type: 2 },
-                { buttonId: '!store', buttonText: { displayText: '🏪 Lihat Produk' }, type: 1 }
+                { 
+                    buttonId: `https://wa.me/${formattedNumber}`, 
+                    buttonText: { displayText: '📞 CHAT OWNER' }, 
+                    type: 2 
+                },
+                { 
+                    buttonId: 'menu_store', 
+                    buttonText: { displayText: '🛍️ LIHAT PRODUK' }, 
+                    type: 1 
+                },
+                { 
+                    buttonId: 'menu_payment', 
+                    buttonText: { displayText: '💳 CARA BAYAR' }, 
+                    type: 1 
+                }
             ]
         });
-        
     } catch (error) {
-        console.error('Error showing owner info:', error);
+        console.error('Error sending owner contact:', error);
+        
+        // Fallback tanpa button
         await sock.sendMessage(from, {
-            text: '❌ Gagal memuat info owner. Silakan hubungi admin langsung.'
+            text: contactText + `\n\n🔗 Link chat: https://wa.me/${formattedNumber}`
         });
     }
 }
 
-module.exports = { showOwnerInfo };
+module.exports = { sendOwnerContact };
