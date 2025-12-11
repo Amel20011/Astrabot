@@ -1,6 +1,5 @@
 const fs = require('fs-extra');
 const path = require('path');
-const utils = require('./utils');
 
 async function showPaymentOptions(sock, from, settings) {
     const paymentText = `💳 *METODE PEMBAYARAN*\n\n`
