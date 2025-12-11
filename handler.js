@@ -1,6 +1,5 @@
 const fs = require('fs-extra');
 const path = require('path');
-const CONFIG = require('./config');
 
 // Import modules
 const menu = require('./libs/menu');
@@ -8,6 +7,23 @@ const store = require('./libs/store');
 const owner = require('./libs/owner');
 const payment = require('./libs/payment');
 const settings = require('./libs/settings');
+
+// Load config
+const CONFIG = require('./config');
+
+async function loadSettings() {
+    try {
+        const settings = await fs.readJson(path.join(__dirname, 'data', 'settings.json'));
+        return settings;
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        return {
+            storeName: CONFIG.storeName,
+            isOpen: CONFIG.isOpen,
+            openingHours: CONFIG.openingHours
+        };
+    }
+}
 
 async function messageHandler(sock, msg) {
     try {
@@ -17,19 +33,24 @@ async function messageHandler(sock, msg) {
         
         // Extract text message
         if (messageType === 'conversation') {
-            text = msg.message.conversation.toLowerCase();
+            text = msg.message.conversation;
         } else if (messageType === 'extendedTextMessage') {
-            text = msg.message.extendedTextMessage.text.toLowerCase();
+            text = msg.message.extendedTextMessage.text;
         } else {
-            return; // Skip non-text messages
+            return;
         }
         
-        // Check if message starts with prefix
-        if (!text.startsWith(CONFIG.prefix)) {
-            // Auto reply untuk pesan pertama
-            if (text.includes('halo') || text.includes('hai') || text.includes('hi')) {
+        // Convert to lowercase for command checking
+        const textLower = text.toLowerCase();
+        
+        // Load current settings
+        const currentSettings = await loadSettings();
+        
+        // Auto reply untuk pesan pertama
+        if (!textLower.startsWith(CONFIG.prefix)) {
+            if (textLower.includes('halo') || textLower.includes('hai') || textLower.includes('hi')) {
                 await sock.sendMessage(from, {
-                    text: `👋 Halo! Selamat datang di *${CONFIG.storeName || 'Toko Online'}*!\n\nKetik *${CONFIG.prefix}menu* untuk melihat daftar menu.`
+                    text: `👋 Halo! Selamat datang di *${currentSettings.storeName || 'Toko Online'}*!\n\nToko saat ini: ${currentSettings.isOpen ? '🟢 BUKA' : '🔴 TUTUP'}\nJam: ${currentSettings.openingHours || '09:00-21:00'}\n\nKetik *${CONFIG.prefix}menu* untuk melihat daftar menu.`
                 });
             }
             return;
@@ -39,13 +60,13 @@ async function messageHandler(sock, msg) {
         const args = text.slice(CONFIG.prefix.length).trim().split(/ +/);
         const command = args.shift().toLowerCase();
         
-        console.log(`Command: ${command} dari ${from}`);
+        console.log(`📨 Command: ${command} dari ${from}`);
         
         // Handle commands
         switch (command) {
             case 'menu':
             case 'help':
-                await menu.showMenu(sock, from);
+                await menu.showMenu(sock, from, currentSettings);
                 break;
                 
             case 'store':
@@ -98,13 +119,13 @@ async function messageHandler(sock, msg) {
                 
             case 'status':
                 await sock.sendMessage(from, {
-                    text: `🏪 *Status Toko*\n\nToko: ${CONFIG.storeName || 'Toko Online'}\nStatus: ${CONFIG.isOpen ? '🟢 BUKA' : '🔴 TUTUP'}\nJam Operasi: ${CONFIG.openingHours || '09:00-21:00'}`
+                    text: `🏪 *Status Toko*\n\nToko: ${currentSettings.storeName || 'Toko Online'}\nStatus: ${currentSettings.isOpen ? '🟢 BUKA' : '🔴 TUTUP'}\nJam Operasi: ${currentSettings.openingHours || '09:00-21:00'}\nAlamat: ${currentSettings.address || '-'}`
                 });
                 break;
                 
             case 'info':
                 await sock.sendMessage(from, {
-                    text: `📱 *BOT TOKO ONLINE*\n\nVersi: 1.0.0\nDibuat dengan: @whiskeysockets/baileys\n\nKetik *${CONFIG.prefix}menu* untuk melihat semua perintah.`
+                    text: `📱 *BOT TOKO ONLINE*\n\nVersi: 1.0.0\nDibuat dengan: @whiskeysockets/baileys (modified)\nPrefix: ${CONFIG.prefix}\n\nKetik *${CONFIG.prefix}menu* untuk melihat semua perintah.`
                 });
                 break;
                 
@@ -115,7 +136,14 @@ async function messageHandler(sock, msg) {
         }
         
     } catch (error) {
-        console.error('Error handling message:', error);
+        console.error('❌ Error handling message:', error);
+        try {
+            await sock.sendMessage(msg.key.remoteJid, {
+                text: '❌ Terjadi kesalahan saat memproses pesan. Silakan coba lagi nanti.'
+            });
+        } catch (e) {
+            console.error('❌ Gagal mengirim pesan error:', e);
+        }
     }
 }
 
